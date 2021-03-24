@@ -1,0 +1,866 @@
+/**
+ * Real-Time Recent Changes
+ * https://github.com/Krinkle/mw-gadget-rtrc
+ *
+ * @copyright 2010-2018 Timo Tijhof
+ */
+ 
+/* Minimise MediaWiki frame */
+ 
+.mw-rtrc-available #siteNotice,
+.mw-rtrc-available .firstHeading,
+.mw-rtrc-available #bodyContent {
+	visibility: hidden;
+}
+ 
+.mw-rtrc-available #ca-talk,
+.mw-rtrc-available #p-views,
+.mw-rtrc-available #p-cactions,
+.mw-rtrc-available #footer,
+.mw-rtrc-available #contentSub,
+.mw-rtrc-available #catlinks,
+.mw-rtrc-available .mw-revdelundel-link {
+	display: none;
+}
+ 
+/* Wrapper */
+ 
+.mw-rtrc-wrapper {
+	position: relative;
+	background: rgb(247, 246, 248);
+	border-top: 30px solid #343434;
+	padding: 0 1em;
+	font-size: 13px;
+	line-height: 1.4;
+	color: #343434;
+	opacity: 0;
+	transition: opacity 150ms ease-out 50ms;
+}
+ 
+.mw-rtrc-ready .mw-rtrc-wrapper {
+	opacity: 1;
+}
+ 
+.mw-rtrc-legend .mw-rtrc-item {
+	display: inline-block;
+	padding: 0 0.6em;
+}
+ 
+.mw-rtrc-available #content {
+	background: rgb(247, 246, 248);
+	padding: 0;
+}
+ 
+.mw-rtrc-head {
+	position: absolute;
+	left: 1em;
+	right: 1em;
+	/* See .mw-rtrc-wrapper#border-top */
+	top: -30px;
+	line-height: 30px;
+	text-align: center;
+	color: #ccc;
+	/* Avoid overlap with head-links on narrow screens */
+	padding: 0 11em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+ 
+.mw-rtrc-foot {
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background: rgba(255, 255, 255, 0.7);
+	padding: 6px 15px 6px 15px;
+	border-top: 1px solid #a1cef5;
+	text-align: center;
+	color: #343434;
+	transition: all 150ms ease-out;
+	transition-property: opacity, background;
+}
+ 
+.mw-rtrc-foot:hover {
+	background: rgba(255, 255, 255, 1);
+}
+ 
+/* Sidebar overlay */
+ 
+/* Don't animate initial hide from init(), only after its ready */
+.mw-rtrc-ready.mw-rtrc-sidebar-toggleable #mw-panel,
+.mw-rtrc-ready.mw-rtrc-sidebar-toggleable #left-navigation,
+.mw-rtrc-ready.mw-rtrc-sidebar-toggleable #content,
+.mw-rtrc-navtoggle {
+	transition: transform 250ms ease-out;
+}
+.mw-rtrc-ready.mw-rtrc-sidebar-toggleable .mw-rtrc-sidebar-cover {
+	transition: opacity 250ms ease-out;
+}
+.mw-rtrc-ready.mw-rtrc-sidebar-toggleable #p-personal {
+	/* When sliding out */
+	transition: z-index 0ms linear 255ms;
+}
+.mw-rtrc-ready.mw-rtrc-sidebar-on #p-personal {
+	/* When sliding in */
+	transition: z-index 0ms linear 0ms;
+}
+ 
+/* Make the sidebar standalone for transitioning. */
+.mw-rtrc-sidebar-toggleable #mw-panel {
+	background-color: #f6f6f6;
+	top: 0; /* was 160px */
+	padding-top: 0; /* was 1em */
+	width: 11em; /* was 10em with 1em offset from #content */
+	min-height: 100%;
+ 
+	z-index: 1; /* overlap mw-rtrc-sidebar-cover */
+	box-shadow: rgba(0, 0, 0, 0.5) 0 0 25px;
+	will-change: transform;
+ 
+}
+/* flipped */
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .ltr #mw-panel {
+	border-right: 1px solid #a7d7f9; /* transferred from #content/border-left */
+	transform: translate(-105%, 0);
+}
+.mw-rtrc-sidebar-toggleable #p-logo {
+	position: static; /* was absolute */
+	margin-bottom: 1em; /* transferred from #mw-panel/padding-top */
+}
+/* flipped */
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .ltr #left-navigation {
+	margin-left: 1em;
+}
+/* flipped */
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .ltr #content {
+	margin-left: 0;
+	border-left: 0;
+}
+.mw-rtrc-sidebar-cover {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: #000;
+	will-change: opacity;
+	opacity: 0;
+	pointer-events: none;
+}
+ 
+/* navtoggle is inside #mw-panel and relative to its box */
+.mw-rtrc-navtoggle {
+	position: absolute;
+	top: 10px;
+	border: 0 solid #aaa;
+	width: 10px;
+	height: 15px;
+	cursor: pointer;
+ 
+	transform: scaleX(1);
+}
+/* flipped */
+/* @noflip */
+.ltr .mw-rtrc-navtoggle {
+	left: 13.5em;
+	border-width: 0 0 0 5px;
+}
+/* arrow */
+.mw-rtrc-navtoggle:after {
+	content: " ";
+	width: 0;
+	height: 0;
+	position: absolute;
+	border: 5px solid transparent;
+	top: 50%;
+	margin-top: -5px;
+}
+/* flipped */
+/* @noflip */
+.ltr .mw-rtrc-navtoggle:after {
+	border-left-color: #333;
+	margin-left: 5px;
+}
+.mw-rtrc-sidebar-toggleable #mw-panel:before {
+	/* cover the space between navtoggle and mw-panel to avoid :hover gaps */
+	content: "";
+	position: absolute;
+	top: 0;
+	display: block;
+	width: calc(13em + 30px);
+	height: 40px;
+}
+/* flipped */
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .ltr #mw-panel:before  {
+	left: 0;
+}
+ 
+.mw-rtrc-sidebar-toggleable #mw-panel:hover .mw-rtrc-navtoggle {
+	border-color: #fff;
+	transform: scaleX(-1);
+}
+/* Must specify .ltr/.rtl to match specificity */
+.mw-rtrc-sidebar-toggleable .ltr #mw-panel:hover,
+.mw-rtrc-sidebar-toggleable .rtl #mw-panel:hover {
+	z-index: 1;
+	transform: none;
+}
+.mw-rtrc-sidebar-on #p-personal {
+	z-index: 0; /* was 100 */
+}
+.mw-rtrc-sidebar-on .mw-rtrc-sidebar-cover {
+	opacity: 0.5;
+}
+ 
+/* Buttons / Links */
+ 
+.mw-rtrc-head-links {
+	position: absolute;
+	top: 0;
+}
+/* flipped */
+/* @noflip */
+.ltr .mw-rtrc-head-links {
+	right: 1em;
+}
+ 
+.mw-rtrc-head-links a {
+	display: inline-block;
+	padding: 0 0.6em;
+	color: #ccc;
+}
+ 
+.mw-rtrc-head-links a:hover {
+	color: #fff;
+	text-decoration: none;
+	background: #555;
+}
+ 
+.mw-rtrc-wrapper .button:active {
+	position: relative;
+	top: 1px;
+}
+ 
+.mw-rtrc-wrapper select {
+	/* Reset Vector's select { vertical-align: top; } */
+	vertical-align: baseline;
+}
+ 
+.mw-rtrc-wrapper .helpicon {
+	display: inline-block;
+	margin: 0 0.3em;
+	vertical-align: middle;
+	color: var(--a);
+    vertical-align: baseline;
+}
+ 
+.mw-rtrc-nohelp .helpicon {
+	display: none;
+}
+ 
+.mw-rtrc-wrapper .button:hover,
+.mw-rtrc-wrapper .helpicon:hover,
+#mw-rtrc-toggleHelp {
+	cursor: pointer;
+}
+ 
+.mw-rtrc-head-links a:first-letter,
+.mw-rtrc-diff-tools .tab:first-letter {
+	text-transform: uppercase;
+}
+ 
+/* Settings */
+ 
+.mw-rtrc-settings {
+	margin: 0 auto;
+	text-align: center;
+}
+ 
+.mw-rtrc-settings fieldset {
+	display: inline-block;
+	background: #fff;
+	box-shadow: rgba(200, 200, 200, 1) 0 5px 15px;
+	text-align: initial;
+	/* reset mw/fieldset */
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0 0 5px 5px;
+	overflow: hidden;
+}
+ 
+.mw-rtrc-setting-select {
+	max-width: 80px;
+}
+ 
+.mw-rtrc-settings .panel-group {
+	display: table;
+	width: 100%;
+}
+ 
+.mw-rtrc-settings .panel-group:first-child {
+	border-bottom: 1px solid #ddd;
+}
+ 
+.mw-rtrc-settings .panel {
+	display: table-cell;
+	width: 1px; /* auto doesn't work, cells will grow now from 1px */
+	vertical-align: top;
+	border-right: 1px solid #ddd;
+	padding: 3px 5px;
+	white-space: nowrap;
+	text-align: center;
+}
+ 
+.mw-rtrc-settings .sub-panel {
+	display: inline-block;
+	vertical-align: top;
+	text-align: initial;
+	padding: 0 5px;
+	border-right: 1px solid #ddd;
+}
+ 
+.mw-rtrc-settings .sub-panel:first-of-type {
+	padding-left: 0;
+}
+.mw-rtrc-settings .sub-panel:last-of-type {
+	border-right: 0;
+	padding-right: 0;
+}
+ 
+.mw-rtrc-settings .panel .head {
+	display: block;
+	font-weight: bold;
+}
+ 
+.mw-rtrc-settings .panel-group-mini .head {
+	display: inline-block;
+}
+ 
+.mw-rtrc-settings .button {
+	padding: 6px 12px;
+	border-width: 1px;
+	border-style: solid;
+	border-radius: 4px;
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 1.42;
+	color: #fff;
+	background-color: #357ebd;
+	border-color: #3071a9;
+	height: auto;
+}
+.mw-rtrc-settings .button-small {
+	padding: 3px 6px;
+	font-size: 11px;
+	line-height: 1.5;
+	border-radius: 3px;
+}
+.mw-rtrc-settings .button:hover {
+	background-color: #428bca;
+	border-color: #428bca;
+	cursor: pointer;
+}
+.mw-rtrc-settings .button:active {
+	box-shadow: inset 0 4px 6px rgba(0, 0, 0, 0.250);
+}
+.mw-rtrc-settings .button-green {
+	background-color: #4cae4c;
+	border-color: #449d44;
+}
+.mw-rtrc-settings .button-green:hover	{
+	background-color: #5cb85c;
+	border-color: #5cb85c;
+}
+.mw-rtrc-settings .button-red {
+	background-color: #d43f3a;
+	border-color: #c9302c;
+}
+.mw-rtrc-settings .button-red:hover {
+	background-color: #d9534f;
+	border-color: #d9534f;
+}
+.mw-rtrc-settings .button[disabled]:hover {
+	cursor: default;
+}
+
+#mw-rtrc-settings-refresh {
+    width: 3.2em;
+}
+
+.mw-rtrc-settings .panel-last {
+    vertical-align: middle;
+}
+
+.mw-rtrc-settings .panel-group {
+	margin-bottom: 0;
+}
+ 
+/* Diff frame */
+
+.mw-rtrc-diff .mw-revslider-container {
+    display: none;
+}
+
+.mw-rtrc-diff-content {
+    max-height: 350px;
+    overflow-y: auto;
+    overflow-x: hidden;
+	padding: 10px;
+	border: 1px solid #ccc;
+}
+
+.mw-rtrc-diff-bottom {
+	height: 10px;
+}
+ 
+.mw-rtrc-diff {
+	position: relative;
+	margin: 15px;
+    border-radius: 5px;
+	padding: 0 10px;
+	background: #fff;
+	box-shadow: rgba(200, 200, 200, 1) 0 5px 15px;
+	transform-origin: top;
+	transform: scaleY(1);
+	max-height: 500px;
+	/* When opening, delay the slide until after we reserve the height */
+	transition: transform 0.3s ease 0.3s, max-height 0.3s ease;
+}
+ 
+.mw-rtrc-diff-closed {
+	max-height: 0;
+	transform: scaleY(0);
+	/* When closing, no delay for height change since it is naturally behind
+	   while lowering the height hidden in overflow to the actual height */
+	transition: transform 0.3s ease, max-height 0.3s ease 0.3s;
+}
+ 
+.mw-rtrc-diff-loading {
+	opacity: 0.4;
+	pointer-events: none;
+}
+ 
+.mw-rtrc-diff h3 {
+	margin: 0 1em 0.5em 0;
+	border-bottom: 1px solid rgb(247, 246, 248);
+	font-size: 21px;
+	font-weight: normal;
+	white-space: nowrap;
+	overflow: hidden;
+}
+ 
+.mw-rtrc-diff table.diff {
+	margin: 0;
+	width: 100%;
+}
+ 
+.mw-rtrc-diff-tools {
+	position: absolute;
+	top: 0;
+	right: 2em;
+	width: 80%;
+}
+ 
+.mw-rtrc-diff-tools .tab {
+	float: right;
+	display: block;
+	font-weight: bold;
+	margin-left: 3px;
+	padding: 3px 10px;
+	background-color:rgb(247, 246, 248);
+	border-bottom-left-radius: 11px;
+	border-bottom-right-radius: 11px;
+}
+ 
+.mw-rtrc-diff-tools .tab a:hover {
+	cursor: pointer;
+}
+ 
+/* Feed */
+
+.mw-rtrc-body .newPage:hover {
+	cursor: pointer;
+}
+ 
+.mw-rtrc-body {
+	position: relative;
+	margin: 15px;
+}
+ 
+.mw-rtrc-body.placeholder {
+	width: 100%;
+	height: 600px;
+}
+ 
+.mw-rtrc-body.placeholder > * {
+	display: none;
+}
+ 
+.mw-rtrc-feed {
+	position: relative;
+	padding: 2em 0;
+	background: #fff;
+	font-size: 14px;
+	box-shadow: rgba(200, 200, 200, 1) 0 5px 15px;
+	border-radius: 5px 5px 0 0;
+}
+ 
+.mw-rtrc-feed-update {
+	position: absolute;
+	top: 0.5em;
+	left: 10%;
+	width: 80%;
+	font-size: smaller;
+	text-align: center;
+}
+ 
+#krRTRC_loader {
+	position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 20px;
+}
+ 
+.mw-rtrc-feed-content {
+	margin: 0 0 -1.5em 0;
+	width: 100%;
+}
+ 
+.mw-rtrc-item,
+.mw-rtrc-heading {
+	padding: 0 5px;
+	white-space: nowrap;
+	border: 1px solid transparent;
+}
+ 
+.mw-rtrc-item .mw-title {
+	unicode-bidi: embed;
+}
+ 
+.mw-rtrc-item:nth-child(odd),
+.mw-rtrc-heading:nth-child(odd) {
+	background: #f3f3f3;
+}
+ 
+.mw-rtrc-item.mw-rtrc-item-alert {
+	background: #ffd5d5;
+}
+ 
+.mw-rtrc-item.mw-rtrc-item-skipped {
+	background: #d6d9e9;
+}
+ 
+.mw-rtrc-item.mw-rtrc-item-patrolled {
+	background: #d9e9d6;
+}
+ 
+.mw-rtrc-item.mw-rtrc-item-current {
+	background: #ffce7b;
+	border: 1px solid orange;
+}
+ 
+.mw-rtrc-item-alert-rev .mw-rtrc-revscore {
+	cursor: help;
+}
+ 
+.mw-rtrc-item-alert-user .mw-userlink,
+.mw-rtrc-item-alert-rev .mw-rtrc-revscore {
+	padding-left: 20px;
+}
+ 
+@media (min-resolution: 2dppx), (min-resolution: 192dpi) {
+	.mw-rtrc-item-alert-user .mw-userlink,
+	.mw-rtrc-item-alert-rev .mw-rtrc-revscore {
+		background-size: 18px;
+	}
+}
+ 
+/* Acts like a table with table-rows, using divs to avoid fixed table-layout with forced width and oveflow issues */
+.mw-rtrc-item div {
+	display: inline-block;
+	overflow: hidden;
+	padding: 3px 0;
+	vertical-align: middle;
+}
+ 
+.mw-rtrc-item div[first] { width: 40% }
+.mw-rtrc-item div[user] { width: 24% }
+.mw-rtrc-item div[comment] { width: 30% }
+.mw-rtrc-item .mw-rtrc-meta {
+	width: 6%;
+	text-align: right;
+}
+ 
+.mw-rtrc-meta .mw-plusminus {
+	font-size: smaller;
+}
+ 
+.mw-rtrc-legend {
+	margin: 5px auto;
+	padding: 5px 13px;
+	background: #fff;
+	box-shadow: rgba(200, 200, 200, 1) 0 5px 15px;
+	border-radius: 0 0 5px 5px;
+}
+ 
+/* Diff pre-wrap (partially from wikibits/diff.css but there only adds pre-wrap for diffchange */
+.mw-rtrc-available table.diff td {
+	white-space: pre-wrap;
+}
+ 
+/**
+ * On/Off switch checboxes.
+ * Based on "iOS 6 style switch checkboxes" by Lea Verou http://lea.verou.me
+ */
+ 
+.mw-rtrc-settings .switch {
+	position: absolute;
+	opacity: 0;
+}
+ 
+/* @noflip */
+.mw-rtrc-settings .switch + div {
+	direction: ltr;
+ 
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 .5em;
+	width: 3em;
+	height: 1em;
+	overflow: hidden;
+	background: #fff;
+	background-image: linear-gradient(rgba(0, 0, 0, .1), transparent),
+	                  linear-gradient(90deg, #357ebd 50%, transparent 50%);
+	background-size: 200% 100%;
+	background-position: 100% 0;
+	background-origin: border-box;
+	background-clip: border-box;
+	border: 1px solid rgba(0, 0, 0, .3);
+	border-radius: 999px;
+	box-shadow: 0 .1em .1em rgba(0, 0, 0, .2) inset,
+		        0 .45em 0 .1em rgba(0, 0, 0, .05) inset;
+	font-size: 150%;
+	text-align: left;
+	transition-duration: .4s;
+	transition-property: padding, width, background-position, text-indent;
+}
+ 
+/* @noflip */
+.mw-rtrc-settings .switch:checked + div {
+	padding-left: 2em;
+	background-position: 0 0;
+}
+ 
+/* @noflip */
+.mw-rtrc-settings .switch + div:before {
+	content: 'On';
+	float: left;
+	margin: -.1em;
+	width: 1.65em;
+	height: 1.65em;
+	background: #fff;
+	background-image: linear-gradient(rgba(0, 0, 0, .2), transparent);
+	border: 1px solid rgba(0,0,0,.35);
+	border-radius: inherit;
+	box-shadow: 0 .1em .1em .1em hsla(0, 0%, 100%, .8) inset,
+	            0 0 .5em rgba(0, 0, 0, .3);
+	color: white;
+	text-shadow: 0 -1px 1px rgba(0, 0, 0, .3);
+	text-indent: -2.5em;
+}
+ 
+.mw-rtrc-settings .switch:active + div:before {
+	background-color: #eee;
+}
+ 
+.mw-rtrc-settings .switch:focus + div {
+	box-shadow: 0 .1em .1em rgba(0, 0, 0, .2) inset,
+	            0 .45em 0 .1em rgba(0, 0, 0, .05) inset,
+	            0 0 .4em 1px rgba(255, 0, 0, .5);
+}
+ 
+.mw-rtrc-settings .switch + div:before,
+.mw-rtrc-settings .switch + div:after {
+	font: bold 60%/1.9 sans-serif;
+	text-transform: uppercase;
+	line-height: 150%;
+}
+ 
+/* @noflip */
+.mw-rtrc-settings .switch + div:after {
+	content: 'Off';
+	text-align: left;
+	float: left;
+	text-indent: .5em;
+	color: rgba(0, 0, 0, .45);
+	text-shadow: none;
+}
+ 
+ 
+/**
+ * Manually flipped declarations
+ * - We set @noflip everywhere because this gadget will
+ *   be stored on-wiki and we need to disable the native flip
+ *   mechanism because we'll deliver one version to all users.
+ */
+ 
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .rtl #mw-panel {
+	border-left: 1px solid #a7d7f9;
+	transform: translate(105%, 0);
+}
+ 
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .rtl #left-navigation {
+	margin-right: 1em;
+}
+ 
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .rtl #content {
+	margin-right: 0;
+	border-right: 0;
+}
+ 
+/* @noflip */
+.rtl .mw-rtrc-navtoggle {
+	right: 13.5em;
+	border-width: 0 5px 0 0;
+}
+ 
+/* @noflip */
+.rtl .mw-rtrc-navtoggle:after {
+	border-right-color: #333;
+	margin-right: 5px;
+}
+ 
+/* @noflip */
+.mw-rtrc-sidebar-toggleable .rtl #mw-panel:before  {
+	right: 0;
+}
+ 
+/* @noflip */
+.rtl .mw-rtrc-head-links {
+	left: 1em;
+}
+
+/* layout override */
+.mw-rtrc-settings .panel-group {
+    display: grid;
+    grid-template-columns: repeat(11, 80px);
+    grid-template-areas: "a a a a d d d f f b e" "c c h h g g i i i j j";
+    row-gap: 1px;
+    column-gap: 1px;
+}
+
+.mw-rtrc-settings .panel-group {
+    background-color: #ddd;
+}
+
+.mw-rtrc-settings .panel-group .sub-panel {
+    border: none;
+}
+
+.mw-rtrc-settings .panel-group .panel {
+    display: block;
+    width: auto;
+    margin: 0;
+    padding: 5px;
+    line-height: 1.8em;
+    border: none;
+}
+
+.mw-rtrc-settings .panel-group .panel input {
+    line-height: 1.2em;
+}
+
+.mw-rtrc-settings .panel-group .panel-last {
+    text-align: center;
+}
+
+.mw-rtrc-settings .panel-group .panel > label {
+    font-size: 16px;
+}
+
+.mw-rtrc-settings .panel-group .panel > label select {
+    font-size: 14px;
+    margin-left: 5px;
+}
+
+.mw-rtrc-settings .panel-group .panel > label .switched {
+    font-size: 20px;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(1) {
+    grid-area: a;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(2) {
+    grid-area: b;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(3) {
+    grid-area: c;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(4) {
+    grid-area: d;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(5) {
+    grid-area: e;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(6) {
+    grid-area: f;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(7) {
+    grid-area: g;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(8) {
+    grid-area: h;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(9) {
+    grid-area: i;
+}
+
+.mw-rtrc-settings .panel-group .panel:nth-child(10) {
+    grid-area: j;
+}
+
+.panel-group .panel:nth-child(9), .panel-group .panel:nth-child(8), .panel-group .panel:nth-child(7), .panel-group .panel:nth-child(3) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media screen and (min-width: 990px) and (max-width:1200px) {
+    .mw-rtrc-settings .panel-group {
+        grid-template-columns: repeat(9, 80px);
+        grid-template-areas: "a a a a d d d f f" "b e h h c c g g g" "b e i i i i j j j";
+    }
+}
+
+@media screen and (max-width: 990px) {
+    .mw-rtrc-settings .panel-group {
+        grid-template-columns: repeat(4, 80px);
+        grid-template-areas: "a a a a" "d d d d" "f f b e" "h h c c" "g g g g" "i i i i" "j j j j";
+    }
+
+    .mw-rtrc-feed-content .mw-rtrc-item > div {
+        display: block;
+        width: 100%;
+	}
+	
+	.mw-rtrc-diff .tab-title {
+		display: none;
+	}
+}
