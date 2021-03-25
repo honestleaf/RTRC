@@ -5,24 +5,6 @@
  * @copyright 2010-2018 Timo Tijhof
  */
  
-/* Minimise MediaWiki frame */
- 
-.mw-rtrc-available #siteNotice,
-.mw-rtrc-available .firstHeading,
-.mw-rtrc-available #bodyContent {
-	visibility: hidden;
-}
- 
-.mw-rtrc-available #ca-talk,
-.mw-rtrc-available #p-views,
-.mw-rtrc-available #p-cactions,
-.mw-rtrc-available #footer,
-.mw-rtrc-available #contentSub,
-.mw-rtrc-available #catlinks,
-.mw-rtrc-available .mw-revdelundel-link {
-	display: none;
-}
- 
 /* Wrapper */
  
 .mw-rtrc-wrapper {

@@ -1059,7 +1059,9 @@ Example:
           "</a>" +
           '<span section="' +
           message("permalink") +
-          '" class="helpicon"><i class="fa fa-question-circle"></i></span>'
+          '" class="helpicon" title="' +
+          msg("helpicon-tooltip") +
+          '"><i class="fa fa-question-circle"></i></span>'
       );
 
     if (update.rawHtml !== prevFeedHtml) {
@@ -1277,7 +1279,9 @@ Example:
           message("userfilter") +
           '<span section="' +
           message("userfilter") +
-          '" class="helpicon"><i class="fa fa-question-circle"></i></span>：' +
+          '" class="helpicon" title="' +
+          msg("helpicon-tooltip") +
+          '"><i class="fa fa-question-circle"></i></span>：' +
           "<br />" +
           '<input type="search" size="16" name="user" />' +
           "</label>" +
@@ -1314,7 +1318,9 @@ Example:
           message("timeframe") +
           '<span section="' +
           message("timeframe") +
-          '" class="helpicon"><i class="fa fa-question-circle"></i></span>' +
+          '" class="helpicon" title="' +
+          msg("helpicon-tooltip") +
+          '"><i class="fa fa-question-circle"></i></span>' +
           "</label>" +
           '<div class="sub-panel" style="text-align: right;">' +
           "<label>" +
@@ -1336,7 +1342,9 @@ Example:
           " " +
           '<span section="' +
           message("order") +
-          '" class="helpicon"><i class="fa fa-question-circle"></i></span>' +
+          '" class="helpicon" title="' +
+          msg("helpicon-tooltip") +
+          '"><i class="fa fa-question-circle"></i></span>' +
           "</label>" +
           '<div class="sub-panel">' +
           "<label>" +
@@ -1357,7 +1365,9 @@ Example:
           message("reload-interval") +
           '<span section="' +
           message("reload-interval") +
-          '" class="helpicon"><i class="fa fa-question-circle"></i></span>' +
+          '" class="helpicon" title="' +
+          msg("helpicon-tooltip") +
+          '"><i class="fa fa-question-circle"></i></span>' +
           "</label>" +
           '<input type="number" value="5" min="1" max="60" size="2" id="mw-rtrc-settings-refresh" name="refresh" /> ' +
           message("minute") +
@@ -1775,17 +1785,15 @@ Example:
     });
 
     // Link helpicons
-    $(".mw-rtrc-wrapper .helpicon")
-      .attr("title", msg("helpicon-tooltip"))
-      .click(function (e) {
-        e.preventDefault();
-        window.open(
-          docUrl +
-            "#" +
-            encodeURIComponent($(this).attr("section")).replaceAll("%", "."),
-          "_blank"
-        );
-      });
+    $("body").on("click", ".mw-rtrc-wrapper .helpicon", function (e) {
+      e.preventDefault();
+      window.open(
+        docUrl +
+          "#" +
+          encodeURIComponent($(this).attr("section")).replaceAll("%", "."),
+        "_blank"
+      );
+    });
 
     // Mark as patrolled when rollbacking
     // Note: As of MediaWiki r(unknown) rollbacking does already automatically patrol all reverted revisions.
