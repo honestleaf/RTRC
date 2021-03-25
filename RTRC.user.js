@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name RTRC
 // @namespace Violentmonkey Scripts
-// @match https://warframe.huijiwiki.com/wiki/warframe%E4%B8%AD%E6%96%87%E7%BB%B4%E5%9F%BA:%E6%B2%99%E7%9B%92
+// @match https://templatemanager.huijiwiki.com/wiki/RTRC
 // @resource css RTRC.css
 // @grant GM_getResourceText
 // @grant GM_addStyle
@@ -49,7 +49,7 @@ RLQ.push(function () {
   "use strict";
 
   var localDict = {
-    months: "1月,2月,3月,4月,5月,6月,7月,8月,9月,11月,12月",
+    months: "1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月",
     contribslink: "贡献",
     title: "巡查工具",
     timeframe: "时间范围",
